@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# 1.a Download and copy data into students.csv
+if find . -name "students.csv"| grep -q .; then
+    echo "File found";
+else
+    echo "File not found";
+    wget "https://www.dropbox.com/s/867rtx3az6e9gm8/LCP_22-23_students.csv" -O LCP_22-23_students.csv
+fi
+cp LCP_22-23_students.csv ./students.csv
+
+# 1.b Create file with only PoD and Physics students
+touch students_pod.csv
+touch students_physics.csv
+grep "PoD" students.csv > students_pod.csv
+grep "Physics" students.csv > students_physics.csv
+
+# 1.c/d Count surname initial and find the most common letter
+max_count=0
+max_letter=""
+for i in {A..Z}; do   
+    count=$(cut -c1 students.csv | grep -c "^$i") 
+    echo -n "$i: $count  " 
+    if [ $count -gt $max_count ]; then
+        max_count=$count
+        max_letter=$i
+    fi
+done
+echo 
+echo "Most common letter: $max_letter, count: $max_count"
+
+# 1.e Divide the students in group
+line_count=0
+rm -f students_group*
+echo "" >> students.csv
+first_line=True
+while read -r line; do
+    if [ $first_line == True ]; then
+        first_line=False
+        continue
+    fi
+    group=$(($line_count % 18 + 1))
+    outname="students_group$group.csv"
+    echo $line >> $outname
+    ((line_count++))
+done < students.csv

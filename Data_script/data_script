@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# 2.a Copy into data.txt
+INPUT=../data.csv 
+OUTPUT=data.txt 
+rm -f $OUTPUT
+touch $OUTPUT
+grep -v "^#" $INPUT | sed -e "s/,//g" > $OUTPUT
+
+# 2.b Count even number
+even_count=0
+while read -r line; do
+    for word in $line; do
+        if (($word % 2 == 0)); then
+            ((even_count++))
+        fi
+    done
+done < "$OUTPUT"
+echo "Even number count:" $even_count
+
+greater_count=0
+smaller_count=0
+word_count=0
+square=0
+bound=$(echo "scale=10; 100.0 * sqrt(3) / 2.0" | bc)
+rm -f data_group*
+
+while read -r line; do
+    for word in $line; do
+
+        # 2.c Count for greater and smaller than 100*sqrt(3)/2
+        square=$(echo "scale=10;$square + $word*$word" | bc)
+        ((word_count++))
+        if ((word_count == 3)); then
+            square=$(echo "scale=10;sqrt($square)" | bc)
+            if (( $(echo "$square > $bound" | bc) )); then
+                ((greater_count++))
+            else
+                ((smaller_count++))
+            fi
+            word_count=0
+            square=0
+        fi
+
+        # 2.d Create n file with data divided by i
+        for ((i=1; i<=$1; i++)); do
+            outname="data_group$i.csv"
+            echo -n $(echo "scale=4;$word/$i" | bc) >> $outname
+            echo -n " " >> $outname
+        done
+    done
+    for f in data_group*; do
+        echo "" >> $f
+    done
+done < "$OUTPUT"
+echo "Greater group count:" $greater_count
+echo "Smaller group count:" $smaller_count
